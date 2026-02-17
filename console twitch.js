@@ -1,23 +1,26 @@
 // Get chat container
 // Why couldn't it just have an id :(
 const chat = document.getElementById("root").children[0].children[0].children[1].children[2].children[0].children[1].children[0].children[0].children[0].children[1].children[0].children[1].children[1].children[0].children[3].children[1].children[1].children[0];
+let lastAmmountOfMessages = chat.children.length;
 
 function getMessages(requirement = (mess) => {
     return true;
 }) {
     const temp = [];
-    for (let i = 0; i < chat.children.length; i++) {
-        if (!requirement(chat.children[i])) {
+    for (let i = 0; i < chat.children.length - lastAmmountOfMessages; i++) {
+        const count = chat.children.length - i - 1;
+        if (!requirement(chat.children[count])) {
             continue;
         }
-        temp.push(chat.children[i]);
+        temp.push(chat.children[count]);
     }
+    lastAmmountOfMessages = chat.children.length;
     return temp;
 }
 
 function getSender(mess) {
     // Jesus christ why is there so much nesting
-    const messageElement = mess.children[0].children[0].children[0].children[0].children[1].children[0].children[0];
+    const messageElement = mess.children[0].children[0].children[0].getElementsByClassName("chat-line__message-container")[0].children[1].children[0].children[0];
     // Basically, if the timestamp is there, we need to check the next child element
     return "@" + messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 1 : 0].children[1].children[0].children[0].innerText;
 }
@@ -25,7 +28,7 @@ function getSender(mess) {
 function getContent(mess) {
     // If it errors, it's probably not a message
     try {
-        const messageElement = mess.children[0].children[0].children[0].children[0].children[1].children[0].children[0];
+        const messageElement = mess.children[0].children[0].children[0].getElementsByClassName("chat-line__message-container")[0].children[1].children[0].children[0];
         const messageContentElement = messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 3 : 2];
         let temp = "";
         const childNodes = messageContentElement.childNodes;
@@ -53,6 +56,7 @@ const socket = new WebSocket("ws://localhost:3001");
 
 socket.onopen = () => {
     const connectTime = Date.now();
+
     setInterval(() => {
         const newMessages = getMessages((mess) => {
             if (mess.alreadyChecked) {

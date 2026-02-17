@@ -1,4 +1,4 @@
-// Here because youtube uses the same id multiple times (bad youtube bad)
+// Here because youtube uses the same id multiple times, but elements don't have a "getElementById" method since that's not supposed to happen (bad youtube bad)
 function getChildById(elem, id) {
     for (const i in elem.children) {
         if (elem.children[i].id === id) {
@@ -83,5 +83,6 @@ socket.onopen = () => {
 socket.onclose = () => {
     console.error("lost connection to server :(");
 };
+
 
 socket.onerror = socket.onclose;

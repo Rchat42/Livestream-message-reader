@@ -1,12 +1,5 @@
-function getChildById(elem, id) {
-    for (const i in elem.children) {
-        if (elem.children[i].id === id) {
-            return elem.children[i];
-        }
-    }
-    return null;
-}
-
+// Get chat container
+// Why couldn't it just have an id :(
 const chat = document.getElementById("root").children[0].children[0].children[1].children[2].children[0].children[1].children[0].children[0].children[0].children[1].children[0].children[1].children[1].children[0].children[3].children[1].children[1].children[0];
 
 function getMessages(requirement = (mess) => {
@@ -23,11 +16,14 @@ function getMessages(requirement = (mess) => {
 }
 
 function getSender(mess) {
+    // Jesus christ why is there so much nesting
     const messageElement = mess.children[0].children[0].children[0].children[0].children[1].children[0].children[0];
+    // Basically, if the timestamp is there, we need to check the next child element
     return "@" + messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 1 : 0].children[1].children[0].children[0].innerText;
 }
 
 function getContent(mess) {
+    // If it errors, it's probably not a message
     try {
         const messageElement = mess.children[0].children[0].children[0].children[0].children[1].children[0].children[0];
         const messageContentElement = messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 3 : 2];
@@ -35,10 +31,12 @@ function getContent(mess) {
         const childNodes = messageContentElement.childNodes;
         for (let i = 0; i < childNodes.length; i++) {
             switch (childNodes[i].className) {
+                // Emoji case (alt because it needs to be a string, so it's usually the emoji unicode character itself)
                 case ("chat-line__message--emote-button"): {
                     temp += childNodes[i].children[0].children[0].children[0].children[0].alt;
                     break;
                 }
+                // Text case
                 case ("text-fragment"): {
                     temp += childNodes[i].innerText;
                     break;
@@ -64,13 +62,13 @@ socket.onopen = () => {
             return true;
         });
 
+        // Check if we connected less than a second ago (avoids counting messages already there)
         if (Date.now() - connectTime < 1000) {
             return;
         }
 
         newMessages.forEach(message => {
             const content = getContent(message);
-            console.log(content);
             if (content === undefined) {
                 return;
             }

@@ -82,7 +82,6 @@ socket.onopen = () => {
 
         // If i didn't have this it would resend the message because the page deletes and recreates the message's element for whatever reason, fuck you twitch ts took me like 5 hours to figure out
         if (chat.innerHTML === chat.lastInnerHTML) {
-            chat.lastInnerHTML = chat.innerHTML;
             return;
         }
         chat.lastInnerHTML = chat.innerHTML;

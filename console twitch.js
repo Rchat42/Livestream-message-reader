@@ -7,8 +7,8 @@ function getMessages(requirement = (mess) => {
     return true;
 }) {
     const temp = [];
-    for (let i = 0; i < chat.children.length - lastAmmountOfMessages; i++) {
-        const count = chat.children.length - i - 1;
+    for (let i = 0; i < chat.children.length; i++) {
+        const count = i;
         if (!requirement(chat.children[count])) {
             continue;
         }
@@ -19,14 +19,18 @@ function getMessages(requirement = (mess) => {
 }
 
 function getSender(mess) {
-    // Jesus christ why is there so much nesting
-    const messageElement = mess.children[0].children[0].children[0].getElementsByClassName("chat-line__message-container")[0].children[1].children[0].children[0];
-    // Basically, if the timestamp is there, we need to check the next child element
-    return "@" + messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 1 : 0].children[1].children[0].children[0].innerText;
+    // If it errors, it's probably not a message
+    try {
+        // Jesus christ why is there so much nesting
+        const messageElement = mess.children[0].children[0].children[0].getElementsByClassName("chat-line__message-container")[0].children[1].children[0].children[0];
+        // Basically, if the timestamp is there, we need to check the next child element
+        return "@" + messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 1 : 0].children[1].children[0].children[0].innerText;
+    } catch (e) {
+        return undefined;
+    }
 }
 
 function getContent(mess) {
-    // If it errors, it's probably not a message
     try {
         const messageElement = mess.children[0].children[0].children[0].getElementsByClassName("chat-line__message-container")[0].children[1].children[0].children[0];
         const messageContentElement = messageElement.children[(messageElement.children[0].className === "chat-line__timestamp") ? 3 : 2];
@@ -52,11 +56,21 @@ function getContent(mess) {
     }
 }
 
+function getReactFiber(elem) {
+    const keys = Object.keys(elem);
+    for (let i = 0; i < keys.length; i++) {
+        if (keys[i].startsWith("__reactFiber$")) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 const socket = new WebSocket("ws://localhost:3001");
 
 socket.onopen = () => {
     const connectTime = Date.now();
-
+    chat.lastInnerHTML = chat.innerHTML;
     setInterval(() => {
         const newMessages = getMessages((mess) => {
             if (mess.alreadyChecked) {
@@ -65,6 +79,13 @@ socket.onopen = () => {
             mess.alreadyChecked = true;
             return true;
         });
+
+        // If i didn't have this it would resend the message because the page deletes and recreates the message's element for whatever reason, fuck you twitch ts took me like 5 hours to figure out
+        if (chat.innerHTML === chat.lastInnerHTML) {
+            chat.lastInnerHTML = chat.innerHTML;
+            return;
+        }
+        chat.lastInnerHTML = chat.innerHTML;
 
         // Check if we connected less than a second ago (avoids counting messages already there)
         if (Date.now() - connectTime < 1000) {
